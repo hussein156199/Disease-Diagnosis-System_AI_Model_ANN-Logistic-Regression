@@ -1,0 +1,2 @@
+Logistic Regression Accuracy: 0.8347
+Neural Network Accuracy: 0.8081

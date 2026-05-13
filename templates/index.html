@@ -1,0 +1,1093 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>نظام تشخيص الأمراض الذكي | Medical Diagnosis System</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary-color: #1e3a8a;      /* أزرق داكن جداً */
+            --primary-dark: #1e2a5a;       /* أزرق غامق */
+            --primary-light: #2d4a9e;      /* أزرق متوسط غامق */
+            --secondary-color: #1d4ed8;    /* أزرق نيلي */
+            --gradient-start: #1e3a8a;
+            --gradient-end: #1e40af;
+            --success-color: #059669;
+            --danger-color: #b91c1c;
+            --warning-color: #d97706;
+            --light-bg: #f0f4f8;
+            --dark-text: #0f172a;
+            --gray-text: #475569;
+            --border-color: #cbd5e1;
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --shadow-lg: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            --shadow-xl: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+        }
+
+        body {
+            font-family: 'Cairo', 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 50%, #0f172a 100%);
+            min-height: 100vh;
+            color: var(--dark-text);
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        /* Animated Background */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 320"><path fill="rgba(255,255,255,0.03)" fill-opacity="1" d="M0,96L48,112C96,128,192,160,288,160C384,160,480,128,576,122.7C672,117,768,139,864,154.7C960,171,1056,181,1152,165.3C1248,149,1344,107,1392,85.3L1440,64L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"></path></svg>') repeat-x bottom;
+            background-size: cover;
+            opacity: 0.5;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Header */
+        .header {
+            text-align: center;
+            color: white;
+            padding: 40px 20px;
+            margin-bottom: 40px;
+            animation: fadeInDown 0.8s ease-out;
+        }
+
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            font-weight: 800;
+            margin-bottom: 15px;
+            text-shadow: 2px 2px 10px rgba(0, 0, 0, 0.3);
+            letter-spacing: -0.5px;
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.95;
+            text-shadow: 1px 1px 5px rgba(0, 0, 0, 0.2);
+        }
+
+        /* Language Switcher */
+        .language-switcher {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 1000;
+            background: rgba(30, 58, 138, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 50px;
+            padding: 5px;
+            box-shadow: var(--shadow-lg);
+            display: flex;
+            gap: 5px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .lang-btn {
+            padding: 8px 20px;
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            font-size: 0.95em;
+            font-weight: 600;
+            border-radius: 50px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            color: white;
+        }
+
+        .lang-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .lang-btn.active {
+            background: white;
+            color: #1e3a8a;
+            box-shadow: var(--shadow);
+        }
+
+        /* Main Layout */
+        .main-layout {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            animation: fadeInUp 0.8s ease-out;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .main-layout {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+        }
+
+        /* Cards */
+        .card {
+            background: rgba(255, 255, 255, 0.98);
+            border-radius: 24px;
+            padding: 30px;
+            box-shadow: var(--shadow-xl);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 1px solid rgba(30, 58, 138, 0.2);
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 30px 60px -15px rgba(0, 0, 0, 0.3);
+        }
+
+        .card h2 {
+            background: linear-gradient(135deg, #1e3a8a, #1d4ed8);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            margin-bottom: 25px;
+            font-size: 1.6em;
+            font-weight: 700;
+            border-right: 4px solid #1e3a8a;
+            padding-right: 15px;
+        }
+
+        /* Days Input */
+        .days-input-group {
+            background: linear-gradient(135deg, #f3f4f6, #ffffff);
+            padding: 15px 20px;
+            border-radius: 16px;
+            margin-bottom: 25px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 15px;
+            border: 1px solid var(--border-color);
+        }
+
+        .days-input-group label {
+            font-weight: 600;
+            color: var(--dark-text);
+            font-size: 1em;
+        }
+
+        .days-counter {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: white;
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 5px;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .days-counter button {
+            background: linear-gradient(135deg, #1e3a8a, #1d4ed8);
+            border: none;
+            cursor: pointer;
+            width: 38px;
+            height: 38px;
+            border-radius: 10px;
+            font-size: 1.2em;
+            transition: all 0.2s;
+            color: white;
+            font-weight: bold;
+        }
+
+        .days-counter button:hover {
+            transform: scale(1.05);
+            box-shadow: var(--shadow);
+        }
+
+        .days-counter input {
+            width: 60px;
+            text-align: center;
+            border: none;
+            font-size: 1.2em;
+            font-weight: 700;
+            padding: 8px;
+            background: transparent;
+            color: #1e3a8a;
+        }
+
+        .days-counter input:focus {
+            outline: none;
+        }
+
+        /* Search Box */
+        .search-wrapper {
+            position: relative;
+            margin-bottom: 25px;
+        }
+
+        .search-box {
+            width: 100%;
+            padding: 14px 20px;
+            border: 2px solid var(--border-color);
+            border-radius: 16px;
+            font-size: 0.95em;
+            font-family: inherit;
+            transition: all 0.3s;
+            background: white;
+        }
+
+        .search-box:focus {
+            outline: none;
+            border-color: #1e3a8a;
+            box-shadow: 0 0 0 4px rgba(30, 58, 138, 0.1);
+        }
+
+        .search-icon {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--gray-text);
+            transition: all 0.3s;
+        }
+
+        html[dir="rtl"] .search-icon {
+            right: 18px;
+            left: auto;
+        }
+
+        html[dir="rtl"] .search-box {
+            padding-right: 45px;
+            padding-left: 20px;
+        }
+
+        html[dir="ltr"] .search-icon {
+            left: 18px;
+            right: auto;
+        }
+
+        html[dir="ltr"] .search-box {
+            padding-left: 45px;
+            padding-right: 20px;
+        }
+
+        /* Symptoms List */
+        .symptoms-list {
+            max-height: 420px;
+            overflow-y: auto;
+            border-radius: 16px;
+            padding: 8px;
+            background: var(--light-bg);
+        }
+
+        .symptoms-list::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .symptoms-list::-webkit-scrollbar-track {
+            background: var(--border-color);
+            border-radius: 10px;
+        }
+
+        .symptoms-list::-webkit-scrollbar-thumb {
+            background: linear-gradient(135deg, #1e3a8a, #1d4ed8);
+            border-radius: 10px;
+        }
+
+        .symptom-item {
+            display: flex;
+            align-items: center;
+            gap: 18px;
+            padding: 12px 16px;
+            margin-bottom: 8px;
+            background: white;
+            border-radius: 14px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 1px solid transparent;
+        }
+
+        .symptom-item:hover {
+            background: linear-gradient(135deg, #e0e7ff, #ffffff);
+            border-color: #1e3a8a;
+            transform: translateX(-5px);
+            box-shadow: var(--shadow);
+        }
+
+        .symptom-item input {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+            accent-color: #1e3a8a;
+            margin: 0;
+        }
+
+        .symptom-item label {
+            flex: 1;
+            cursor: pointer;
+            font-size: 0.95em;
+            font-weight: 500;
+            color: var(--dark-text);
+            transition: all 0.2s;
+        }
+
+        .symptom-item:hover label {
+            color: #1e3a8a;
+        }
+
+        /* Selected Symptoms */
+        .selected-symptoms {
+            margin-top: 25px;
+            padding: 20px;
+            background: linear-gradient(135deg, #e0e7ff, #ffffff);
+            border-radius: 16px;
+            border: 1px solid #1e3a8a;
+            display: none;
+        }
+
+        .selected-symptoms.show {
+            display: block;
+            animation: slideIn 0.4s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .selected-count {
+            font-weight: 700;
+            color: #1e3a8a;
+            margin-bottom: 12px;
+            font-size: 1em;
+        }
+
+        .selected-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .symptom-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            background: linear-gradient(135deg, #1e3a8a, #1d4ed8);
+            color: white;
+            padding: 6px 14px;
+            border-radius: 30px;
+            font-size: 0.85em;
+            font-weight: 500;
+            animation: badgePop 0.3s ease-out;
+            box-shadow: var(--shadow-sm);
+        }
+
+        @keyframes badgePop {
+            from {
+                transform: scale(0.8);
+                opacity: 0;
+            }
+            to {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        .symptom-badge i {
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .symptom-badge i:hover {
+            transform: scale(1.2);
+        }
+
+        /* Buttons */
+        .btn-predict {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, #1e3a8a, #1d4ed8);
+            color: white;
+            border: none;
+            border-radius: 16px;
+            font-size: 1.1em;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 25px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-predict::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            transition: left 0.5s;
+        }
+
+        .btn-predict:hover::before {
+            left: 100%;
+        }
+
+        .btn-predict:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .btn-predict:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* Loading */
+        .loading {
+            text-align: center;
+            padding: 50px;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid var(--border-color);
+            border-top-color: #1e3a8a;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin: 0 auto 15px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Results */
+        .result-area {
+            display: none;
+            animation: fadeInUp 0.6s ease-out;
+        }
+
+        .result-area.show {
+            display: block;
+        }
+
+        .disease-result {
+            background: linear-gradient(135deg, #1e3a8a, #1d4ed8, #1e40af);
+            color: white;
+            padding: 30px;
+            border-radius: 20px;
+            margin-bottom: 25px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .disease-result::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
+            animation: pulse 4s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 0.5; }
+            50% { transform: scale(1.1); opacity: 0.8; }
+        }
+
+        .disease-name {
+            font-size: 2em;
+            font-weight: 800;
+            margin-bottom: 15px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .severity-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            padding: 8px 20px;
+            border-radius: 40px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .severity-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            animation: blink 1.5s ease-in-out infinite;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .severity-critical { background: #ef4444; box-shadow: 0 0 10px #ef4444; }
+        .severity-high { background: #f59e0b; box-shadow: 0 0 10px #f59e0b; }
+        .severity-medium { background: #3b82f6; box-shadow: 0 0 10px #3b82f6; }
+        .severity-low { background: #10b981; box-shadow: 0 0 10px #10b981; }
+
+        .info-card {
+            background: var(--light-bg);
+            padding: 22px;
+            border-radius: 16px;
+            margin-bottom: 20px;
+            transition: all 0.3s;
+            border: 1px solid var(--border-color);
+        }
+
+        .info-card:hover {
+            transform: translateY(-3px);
+            box-shadow: var(--shadow);
+            border-color: #1e3a8a;
+        }
+
+        .info-card h3 {
+            color: #1e3a8a;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1.2em;
+        }
+
+        .precautions-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .precautions-list li {
+            padding: 10px 0;
+            padding-right: 28px;
+            border-bottom: 1px solid var(--border-color);
+            position: relative;
+            transition: all 0.3s;
+        }
+
+        .precautions-list li:hover {
+            transform: translateX(-5px);
+            color: #1e3a8a;
+        }
+
+        .precautions-list li:before {
+            content: "✓";
+            position: absolute;
+            right: 0;
+            color: #059669;
+            font-weight: bold;
+            font-size: 1.1em;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        .stat-box {
+            background: linear-gradient(135deg, var(--light-bg), #ffffff);
+            padding: 18px;
+            border-radius: 16px;
+            text-align: center;
+            transition: all 0.3s;
+            border: 1px solid var(--border-color);
+        }
+
+        .stat-box:hover {
+            transform: translateY(-3px);
+            box-shadow: var(--shadow);
+            border-color: #1e3a8a;
+        }
+
+        .stat-number {
+            font-size: 2em;
+            font-weight: 800;
+            background: linear-gradient(135deg, #1e3a8a, #1d4ed8);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+
+        .stat-label {
+            font-size: 0.85em;
+            color: var(--gray-text);
+            margin-top: 8px;
+            font-weight: 500;
+        }
+
+        .error-message {
+            background: linear-gradient(135deg, #fee2e2, #ffffff);
+            color: #dc2626;
+            padding: 20px;
+            border-radius: 16px;
+            text-align: center;
+            border: 1px solid #fecaca;
+        }
+
+        .placeholder {
+            text-align: center;
+            padding: 50px;
+            color: var(--gray-text);
+        }
+
+        .placeholder i {
+            font-size: 3.5em;
+            margin-bottom: 15px;
+            opacity: 0.4;
+            background: linear-gradient(135deg, #1e3a8a, #1d4ed8);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+
+            .header h1 {
+                font-size: 1.6em;
+            }
+
+            .card {
+                padding: 20px;
+            }
+
+            .disease-name {
+                font-size: 1.4em;
+            }
+
+            .stats {
+                gap: 10px;
+            }
+
+            .stat-number {
+                font-size: 1.5em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="language-switcher">
+        <button class="lang-btn active" data-lang="ar">عربي</button>
+        <button class="lang-btn" data-lang="en">English</button>
+    </div>
+
+    <div class="container">
+        <div class="header">
+            <h1 id="header-title">🏥 نظام تشخيص الأمراض الذكي</h1>
+            <p id="header-subtitle">اختر الأعراض التي تعاني منها وسنقوم بتشخيص المرض المناسب</p>
+        </div>
+
+        <div class="main-layout">
+            <div class="card">
+                <h2 id="symptoms-title">🔍 اختر الأعراض</h2>
+
+                <div class="days-input-group">
+                    <label id="days-label">📅 عدد الأيام:</label>
+                    <div class="days-counter">
+                        <button id="days-minus">−</button>
+                        <input type="number" id="days-input" value="1" min="1" max="30">
+                        <button id="days-plus">+</button>
+                    </div>
+                </div>
+
+                <div class="search-wrapper">
+                    <i class="fas fa-search search-icon"></i>
+                    <input type="text" id="search-input" class="search-box" placeholder="ابحث عن عرض...">
+                </div>
+
+                <div id="symptoms-list" class="symptoms-list">
+                    <div class="loading">
+                        <div class="spinner"></div>
+                        <p>جاري تحميل الأعراض...</p>
+                    </div>
+                </div>
+
+                <div id="selected-container" class="selected-symptoms">
+                    <div class="selected-count" id="selected-count">تم اختيار 0 أعراض</div>
+                    <div id="selected-tags" class="selected-tags"></div>
+                </div>
+
+                <button id="predict-btn" class="btn-predict" disabled>
+                    🔬 تشخيص المرض
+                </button>
+            </div>
+
+            <div class="card">
+                <h2 id="results-title">📋 نتيجة التشخيص</h2>
+
+                <div id="loading-area" class="loading" style="display: none;">
+                    <div class="spinner"></div>
+                    <p id="loading-text">جاري تحليل الأعراض وتشخيص المرض...</p>
+                </div>
+
+                <div id="placeholder" class="placeholder">
+                    <i class="fas fa-stethoscope"></i>
+                    <p>قم باختيار الأعراض أولاً</p>
+                    <small>سيتم عرض نتيجة التشخيص هنا</small>
+                </div>
+
+                <div id="result-area" class="result-area"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let allSymptoms = [];
+        let selectedSymptoms = [];
+        let currentLang = 'ar';
+
+        const translations = {
+            ar: {
+                header_title: '🏥 نظام تشخيص الأمراض الذكي',
+                header_subtitle: 'اختر الأعراض التي تعاني منها وسنقوم بتشخيص المرض المناسب',
+                symptoms_title: '🔍 اختر الأعراض',
+                results_title: '📋 نتيجة التشخيص',
+                days_label: '📅 عدد الأيام:',
+                search_placeholder: 'ابحث عن عرض...',
+                predict_btn: '🔬 تشخيص المرض',
+                diagnosing: 'جاري تشخيص المرض...',
+                no_symptoms: 'لم يتم اختيار أي أعراض بعد',
+                selected_count: 'تم اختيار {count} أعراض',
+                disease: 'التشخيص',
+                description: 'وصف الحالة',
+                precautions: 'الإجراءات الوقائية',
+                symptoms_count: 'عدد الأعراض',
+                severity_score: 'درجة الشدة'
+            },
+            en: {
+                header_title: '🏥 Intelligent Disease Diagnosis System',
+                header_subtitle: 'Select your symptoms and we will diagnose the appropriate disease',
+                symptoms_title: '🔍 Select Symptoms',
+                results_title: '📋 Diagnosis Result',
+                days_label: '📅 Number of Days:',
+                search_placeholder: 'Search for symptom...',
+                predict_btn: '🔬 Diagnose Disease',
+                diagnosing: 'Diagnosing disease...',
+                no_symptoms: 'No symptoms selected yet',
+                selected_count: '{count} symptoms selected',
+                disease: 'Diagnosis',
+                description: 'Description',
+                precautions: 'Precautions',
+                symptoms_count: 'Symptoms Count',
+                severity_score: 'Severity Score'
+            }
+        };
+
+        async function loadSymptoms() {
+            try {
+                const response = await fetch('/api/symptoms');
+                const data = await response.json();
+                if (data.success) {
+                    allSymptoms = data.symptoms;
+                    renderSymptoms();
+                }
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        }
+
+        function renderSymptoms() {
+            const container = document.getElementById('symptoms-list');
+            const searchTerm = document.getElementById('search-input').value.toLowerCase();
+
+            let filtered = allSymptoms;
+            if (searchTerm) {
+                filtered = allSymptoms.filter(s =>
+                    s.name_ar.includes(searchTerm) ||
+                    s.name_en.toLowerCase().includes(searchTerm)
+                );
+            }
+
+            if (filtered.length === 0) {
+                container.innerHTML = '<div class="placeholder"><i class="fas fa-search"></i><p>لا توجد نتائج</p></div>';
+                return;
+            }
+
+            container.innerHTML = filtered.map(symptom => `
+                <div class="symptom-item">
+                    <input type="checkbox" id="sym_${symptom.id.replace(/[^a-zA-Z0-9]/g, '_')}"
+                           ${selectedSymptoms.includes(symptom.id) ? 'checked' : ''}
+                           onchange="toggleSymptom('${symptom.id}')">
+                    <label for="sym_${symptom.id.replace(/[^a-zA-Z0-9]/g, '_')}">
+                        ${currentLang === 'ar' ? symptom.name_ar : symptom.name_en}
+                    </label>
+                </div>
+            `).join('');
+        }
+
+        function toggleSymptom(symptomId) {
+            const index = selectedSymptoms.indexOf(symptomId);
+            if (index === -1) {
+                selectedSymptoms.push(symptomId);
+            } else {
+                selectedSymptoms.splice(index, 1);
+            }
+            updateSelectedDisplay();
+            updatePredictButton();
+        }
+
+        function updateSelectedDisplay() {
+            const container = document.getElementById('selected-container');
+            const countSpan = document.getElementById('selected-count');
+            const tagsDiv = document.getElementById('selected-tags');
+
+            if (selectedSymptoms.length === 0) {
+                container.classList.remove('show');
+                return;
+            }
+
+            container.classList.add('show');
+            countSpan.textContent = translations[currentLang].selected_count.replace('{count}', selectedSymptoms.length);
+
+            tagsDiv.innerHTML = selectedSymptoms.map(symptomId => {
+                const symptom = allSymptoms.find(s => s.id === symptomId);
+                const name = currentLang === 'ar' ? symptom.name_ar : symptom.name_en;
+                return `
+                    <span class="symptom-badge">
+                        ${name}
+                        <i class="fas fa-times" onclick="removeSymptom('${symptomId}')"></i>
+                    </span>
+                `;
+            }).join('');
+        }
+
+        function removeSymptom(symptomId) {
+            selectedSymptoms = selectedSymptoms.filter(s => s !== symptomId);
+            const safeId = symptomId.replace(/[^a-zA-Z0-9]/g, '_');
+            const checkbox = document.getElementById(`sym_${safeId}`);
+            if (checkbox) checkbox.checked = false;
+            updateSelectedDisplay();
+            updatePredictButton();
+        }
+
+        function updatePredictButton() {
+            const btn = document.getElementById('predict-btn');
+            btn.disabled = selectedSymptoms.length === 0;
+        }
+
+        async function predict() {
+            if (selectedSymptoms.length === 0) return;
+
+            const predictBtn = document.getElementById('predict-btn');
+            const loadingArea = document.getElementById('loading-area');
+            const placeholder = document.getElementById('placeholder');
+            const resultArea = document.getElementById('result-area');
+
+            const originalText = predictBtn.innerHTML;
+            predictBtn.disabled = true;
+            predictBtn.innerHTML = '<div class="spinner" style="width: 20px; height: 20px; display: inline-block; margin: 0 10px 0 0;"></div> ' + translations[currentLang].diagnosing;
+
+            loadingArea.style.display = 'block';
+            placeholder.style.display = 'none';
+            resultArea.classList.remove('show');
+
+            try {
+                const daysInput = document.getElementById('days-input');
+                const numDays = parseInt(daysInput.value) || 1;
+
+                const response = await fetch('/api/predict', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        symptoms: selectedSymptoms,
+                        num_days: numDays,
+                        language: currentLang
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    displayResults(data);
+                } else {
+                    showError(data.error || 'حدث خطأ');
+                }
+            } catch (error) {
+                showError('حدث خطأ في الاتصال بالخادم');
+            } finally {
+                loadingArea.style.display = 'none';
+                predictBtn.disabled = false;
+                predictBtn.innerHTML = originalText;
+            }
+        }
+
+        function displayResults(data) {
+            const resultArea = document.getElementById('result-area');
+
+            let severityClass = '';
+            let severityText = '';
+
+            switch(data.severity_level) {
+                case 'critical':
+                    severityClass = 'severity-critical';
+                    severityText = currentLang === 'ar' ? '🔴 حرج - استشر الطبيب فوراً' : '🔴 Critical - Consult immediately';
+                    break;
+                case 'high':
+                    severityClass = 'severity-high';
+                    severityText = currentLang === 'ar' ? '🟠 عالي - استشر الطبيب' : '🟠 High - Consult doctor';
+                    break;
+                case 'medium':
+                    severityClass = 'severity-medium';
+                    severityText = currentLang === 'ar' ? '🟡 متوسط' : '🟡 Medium';
+                    break;
+                default:
+                    severityClass = 'severity-low';
+                    severityText = currentLang === 'ar' ? '🟢 خفيف' : '🟢 Low';
+            }
+
+            const precautionsHtml = data.precautions.map(p => `<li>${p}</li>`).join('');
+            const symptomsCountLabel = currentLang === 'ar' ? 'عدد الأعراض' : 'Symptoms Count';
+            const severityScoreLabel = currentLang === 'ar' ? 'درجة الشدة' : 'Severity Score';
+            const descriptionLabel = currentLang === 'ar' ? 'وصف الحالة' : 'Description';
+            const precautionsLabel = currentLang === 'ar' ? 'الإجراءات الوقائية' : 'Precautions';
+
+            resultArea.innerHTML = `
+                <div class="disease-result">
+                    <div class="disease-name">🩺 ${data.disease}</div>
+                    <div class="severity-indicator">
+                        <span class="severity-dot ${severityClass}"></span>
+                        <span>${severityText}</span>
+                    </div>
+                </div>
+
+                <div class="stats">
+                    <div class="stat-box">
+                        <div class="stat-number">${data.selected_symptoms_count}</div>
+                        <div class="stat-label">${symptomsCountLabel}</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-number">${data.severity_score}</div>
+                        <div class="stat-label">${severityScoreLabel}</div>
+                    </div>
+                </div>
+
+                <div class="info-card">
+                    <h3><i class="fas fa-file-alt"></i> ${descriptionLabel}</h3>
+                    <p style="line-height: 1.6;">${data.description}</p>
+                </div>
+
+                <div class="info-card">
+                    <h3><i class="fas fa-shield-alt"></i> ${precautionsLabel}</h3>
+                    <ul class="precautions-list">${precautionsHtml}</ul>
+                </div>
+            `;
+
+            resultArea.classList.add('show');
+        }
+
+        function showError(message) {
+            const resultArea = document.getElementById('result-area');
+            resultArea.innerHTML = `
+                <div class="error-message">
+                    <i class="fas fa-exclamation-triangle" style="font-size: 2em; margin-bottom: 10px;"></i>
+                    <p><strong>خطأ</strong></p>
+                    <p>${message}</p>
+                </div>
+            `;
+            resultArea.classList.add('show');
+        }
+
+        function changeDays(delta) {
+            const input = document.getElementById('days-input');
+            let value = parseInt(input.value) + delta;
+            value = Math.max(1, Math.min(30, value));
+            input.value = value;
+        }
+
+        function setLanguage(lang) {
+            currentLang = lang;
+            document.documentElement.lang = lang;
+            document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
+            localStorage.setItem('language', lang);
+
+            document.getElementById('header-title').textContent = translations[lang].header_title;
+            document.getElementById('header-subtitle').textContent = translations[lang].header_subtitle;
+            document.getElementById('symptoms-title').textContent = translations[lang].symptoms_title;
+            document.getElementById('results-title').textContent = translations[lang].results_title;
+            document.getElementById('days-label').textContent = translations[lang].days_label;
+            document.getElementById('search-input').placeholder = translations[lang].search_placeholder;
+            document.getElementById('predict-btn').innerHTML = translations[lang].predict_btn;
+
+            document.querySelectorAll('.lang-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.lang === lang);
+            });
+
+            renderSymptoms();
+            updateSelectedDisplay();
+        }
+
+        document.getElementById('search-input').addEventListener('input', () => renderSymptoms());
+        document.getElementById('days-minus').addEventListener('click', () => changeDays(-1));
+        document.getElementById('days-plus').addEventListener('click', () => changeDays(1));
+        document.getElementById('days-input').addEventListener('change', function() {
+            let value = parseInt(this.value);
+            if (isNaN(value)) value = 1;
+            value = Math.max(1, Math.min(30, value));
+            this.value = value;
+        });
+        document.getElementById('predict-btn').addEventListener('click', predict);
+        document.querySelectorAll('.lang-btn').forEach(btn => {
+            btn.addEventListener('click', () => setLanguage(btn.dataset.lang));
+        });
+
+        const savedLang = localStorage.getItem('language') || 'ar';
+        setLanguage(savedLang);
+        loadSymptoms();
+    </script>
+</body>
+</html>
