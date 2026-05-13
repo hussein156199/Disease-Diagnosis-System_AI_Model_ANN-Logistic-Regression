@@ -1,10 +1,1 @@
-venv
-.venv
-__pycache__
-.ipynb_checkpoints
-*.csv
-*.ipynb
-datasets
-dataset
-training_data
-node_modules
+3.10
